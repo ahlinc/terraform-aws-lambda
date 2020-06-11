@@ -933,6 +933,18 @@ def prepare_command(args):
             qd = {k: v for k, v in query_data.items() if k not in log_excludes}
             log.debug('QUERY (excerpt): %s', json.dumps(qd, indent=2))
 
+    log_debug2 = log.isEnabledFor(DEBUG2)
+    tf_cmd = get_terraform_command(log=log if log_debug2 else None)
+
+    if isinstance(tf_cmd, list) and 'destroy' in tf_cmd:
+        log.debug('Skipping content hash computing on destroy phase')
+        json.dump({
+            'filename': '',
+            'was_missing': 'false',
+        }, sys.stdout, indent=2)
+        sys.stdout.write('\n')
+        return
+
     query = datatree('prepare_query', **query_data)
 
     tf_paths = query.paths
