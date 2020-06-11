@@ -20,7 +20,7 @@ import tempfile
 import operator
 import platform
 import subprocess
-from subprocess import check_call
+from subprocess import check_call, check_output
 from contextlib import contextmanager
 from base64 import b64encode
 import logging
@@ -193,6 +193,22 @@ def yesno_bool(val):
         else:
             raise ValueError("Unsupported value: %s" % val)
     return False
+
+
+def get_terraform_command(log=None):
+    try:
+        tf_pid = check_output(['ps', '-o', 'ppid=', '-p', str(os.getppid())])
+        tf_pid = tf_pid.strip().decode()
+        tf_cmd = check_output(['ps', '-o', 'command=', '-p', tf_pid])
+        tf_cmd = shlex.split(tf_cmd.decode())
+        tf_cmd[0] = os.path.basename(tf_cmd[0])
+        if tf_cmd and tf_cmd[0] == 'terraform':
+            if log:
+                log.debug('TF_CALL: %s', shlex_join(tf_cmd))
+                log.debug('TF_CMD: %s', tf_cmd[1])
+        return tf_cmd
+    except Exception:
+        pass
 
 
 ################################################################################
